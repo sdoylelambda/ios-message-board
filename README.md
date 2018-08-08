@@ -87,8 +87,8 @@ Or you can use this with a JSON viewer if you want (they're the exact same):
 1. Create a "MessageThread.swift" file, and create a `MessageThread` **class**. There is a reason for making this a class which will be explained at a point where you can see the difference it will make later on in these instructions. Adopt the `Codable` protocol.
     - **NOTE:** We are calling the class `MessageThread` because there is already a class called `Thread`. As you go along in this project, make sure you don't get the two confused and accidentally use the `Thread` class instead.
 2. Create the following properties:
-    - A `title` string constant
-    - An `identifier` string constant
+    - A `title` string constant.
+    - An `identifier` string constant.
 3. We need to create a separate model object for the messages within the thread. This goes back to the concept of making a model object for each "layer" of the JSON. You may notice that the value for the `"messages"` key in the JSON is another dictionary. Inside of the `MessageThread` class, create a struct called `Message`. 
 
 This may seem a bit odd to nest a class inside of a class, but this is fairly common when using `Codable`. However, this may change as time goes on. `Codable` is relatively new as it was only released in Swift 4. In order to refer to this `Message` class, you must write `MessageThread.Message`.
@@ -203,7 +203,7 @@ In the `MessageThreadController`, create a function `fetchMessageThreads`. This 
   - Unwrap the data, and using a `JSONDecoder` object and a do-try-catch block, decode the JSON as `[String: MessageThread].self` into a constant called `messageThreadDictionaries`. If you are unclear as to why we decoding the JSON this way, refer back to the example JSON. At the highest level, the `MessageThreads` are the values of UUID string keys. Make sure to handle errors in the `catch` statement.
   - Create a constant called `messageThreads`. For its value, `map` the `messageThreadDictionaries` and return only the values of each dictionary. 
   - Set the class's `messageThreads` variable to the `messageThreads` constant you just made so the rest of the application can use the threads.
-  - Call completion
+  - Call `completion`.
 
 #### MessageThreadsTableViewController.
 
