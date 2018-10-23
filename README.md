@@ -56,13 +56,13 @@ For reasons that will be discussed later in these instructions, we're going to s
 
 ### Part 2 - Sending Data To The API.
 
-We're going to set up the functionality to PUT and POST our model objects right now, then come back to fetching them later.
+We're going to set up the functionality to PUT our model objects right now, then come back to fetching them later.
 
 This application will use two model objects. These model objects will form a parent-child relationship between each other. This is a common practice when dealing with JSON from a REST API. The idea behind the relationship in the context of REST APIs is that you make a model object for each "layer" of JSON. This allows you to pick out the properties you care about using in your app individually at every level. It requires a bit more of set up than you may be used to, but it makes using the data that you get from the API in the rest of your application normal.
 
 This is the JSON object we are going to set up and use:
 
-![](https://user-images.githubusercontent.com/16965587/43822961-de88378c-9aaa-11e8-913e-1e751b1dd5f6.png)
+![](https://user-images.githubusercontent.com/1057175/47337107-c4f5be80-d64f-11e8-87e7-061dfbd283d2.png)
 
 Or you can use this with a JSON viewer if you want (they're the exact same):
 
@@ -71,7 +71,7 @@ Or you can use this with a JSON viewer if you want (they're the exact same):
   "695398C4-498C-40A8-AA76-CB2B20DFD9FA": {
     "identifier": "695398C4-498C-40A8-AA76-CB2B20DFD9FA",
     "messages": {
-      "-LJNQ2zNeL4bwG1qpwYB": {
+      "C8282276-DF03-4F1E-9BCF-1DC0E086F14A": {
         "sender": "Spencer",
         "text": "This is a test to make sure the API works!",
         "timestamp": 5.55405872056162E8
@@ -85,19 +85,20 @@ Or you can use this with a JSON viewer if you want (they're the exact same):
 #### MessageThread and Message
 
 1. Create a "MessageThread.swift" file, and create a `MessageThread` **class**. There is a reason for making this a class which will be explained at a point where you can see the difference it will make later on in these instructions. Adopt the `Codable` protocol.
-    - **NOTE:** We are calling the class `MessageThread` because there is already a class called `Thread`. As you go along in this project, make sure you don't get the two confused and accidentally use the `Thread` class instead.
+    - **NOTE:** We are calling the class `MessageThread` because there is already a class called `Thread`, which is part of the Foundation framework. As you work on this project, make sure you don't get the two confused and accidentally use the `Thread` class instead.
 2. Create the following properties:
     - A `title` string constant.
     - An `identifier` string constant.
 3. We need to create a separate model object for the messages within the thread. This goes back to the concept of making a model object for each "layer" of the JSON. You may notice that the value for the `"messages"` key in the JSON is another dictionary. Inside of the `MessageThread` class, create a struct called `Message`. 
 
-This may seem a bit odd to nest a class inside of a class, but this is fairly common when using `Codable`. However, this may change as time goes on. `Codable` is relatively new as it was only released in Swift 4. In order to refer to this `Message` class, you must write `MessageThread.Message`.
+This may seem a bit odd to nest a class inside of a class, but this is fairly common when using `Codable`. In order to refer to this `Message` class, you must write `MessageThread.Message`.
 
-4. In the `Message` struct, add the following:
+4. In the `Message` struct, add the following properties:
     - A `text` string constant.
     - A `sender` string constant.
     - A `timestamp` `Date` constant.
-    - An initializer that gives a default value of the current time to the `timestamp` property. **HINT:** When calling the date initializer (`Date()`), the current time is taken for its value.
+    - An `identifier` `String` constant.
+    - An initializer that provides default values for the `timestamp` and `identifier` properties. Use the current date (`Date()`) as the default value for `timestamp`, and `UUID().uuidString` as the default value for the identifier.
     - Adopt the `Equatable` and `Codable` protocols.
 5. In the `MessageThread` class, add a `messages: [MessageThread.Message]` variable.
 6. Create an initializer for the `MessageThread` class. Give a default value of an empty array to the `messages` property, and a value of `UUID().uuidString` to the `identifier` property.
@@ -124,8 +125,8 @@ You now need a method to create messages within a `MessageThread`. In order to d
 
 1. Create a function called `createMessage`. It should take in a `MessageThread` parameter (so you can put the new message in the correct thread), `text` and `sender` string parameters, and an escaping completion closure. 
 2. Inside of the function, initialize a `MessageThread.Message` object from the parameters in this function. 
-3. Create a `URL` just like you did in the previous function by using the `baseURL` and the `MessageThread` parameter's `identifier`. This time, also append another path component called `"messages"`. **NOTE:** Because of the way `Codable` works by default, this string should match the name of the `MessageThread`'s array of messages property or you will run into trouble later on. After you've appended the identifier and "messages" to the `URL`, append the `"json"` path extension. This path extension **must** be at the end of the `URL`.
-4. Create a `URLRequest` variable with the `URL` you just created. Set its `httpMethod` to `"POST"`.
+3. Create a `URL` just like you did in the previous function by using the `baseURL` and the `MessageThread` parameter's `identifier`. This time, also append another path component called `"messages"`. **NOTE:** Because of the way `Codable` works by default, this string should match the name of the `MessageThread`'s array of messages property or you will run into trouble later on. Next, append the identifier of the newly created messages to the URL. Finally, append the `"json"` path extension. This path extension **must** be at the end of the `URL`.
+4. Create a `URLRequest` variable with the `URL` you just created. Set its `httpMethod` to `"PUT"`.
 5. Encode the `MessageThread.Message` object you just initialized using `JSONEncoder` in a do-try-catch block.
 6. Perform a `URLSessionDataTask` with the `URLRequest` you just created. Handle the potential error returned in the completion closure. If there was no error, then append the `MessageThread.Message` object to the `MessageThread.Message` variable. Since the `MessageThread` is a class, you can directly append it to its array of `messages` here. Remember to call `completion`, and resume the data task.
 
@@ -160,7 +161,7 @@ At this point, you should be able to test the app to see if you are able to crea
 
 ### Part 3 - Fetching Data From The API
 
-Since the messages are being POSTed (thus creating a unique identifier key with the message as the value), we will run into an issue when trying to decode the fetched data from the API into `MessageThread` objects. In order to fix this, we are going to manually tell the decoder how to decode `MessageThread`s instead of letting `Codable` try to do it for us.
+In the JSON returned by the API, the message thread's `messages` property is another dictionary whose keys are identifiers, and whose values are dictionaries with key-value pairs for the rest of each message's properties. When decoding this data, we need to use the key for each message as one of its values (its `identifier`). The synthesized initializer for Codable doesn't know how to deal with this "two layer" structure for messages. In order to fix this, we are going to manually tell the decoder how to decode `MessageThread`s instead of letting `Codable` try to do it for us.
 
 #### MessageThread
 
