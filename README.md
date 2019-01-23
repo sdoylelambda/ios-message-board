@@ -91,7 +91,8 @@ Or you can use this with a JSON viewer if you want (they're the exact same):
     - An `identifier` string constant.
 3. We need to create a separate model object for the messages within the thread. This goes back to the concept of making a model object for each "layer" of the JSON. You may notice that the value for the `"messages"` key in the JSON is another dictionary. Inside of the `MessageThread` class, create a struct called `Message`. 
 
-This may seem a bit odd to nest a class inside of a class, but this is fairly common when using `Codable`. However, this may change as time goes on. `Codable` is relatively new as it was only released in Swift 4. In order to refer to this `Message` class, you must write `MessageThread.Message`.
+
+seem a bit odd to nest a class inside of a class or a struct inside of a struct, but this is fairly common when using `Codable`. However, this may change as time goes on. `Codable` is relatively new as it was only released in Swift 4. In order to refer to this `Message` class, you must write `MessageThread.Message`.
 
 4. In the `Message` struct, add the following:
     - A `text` string constant.
